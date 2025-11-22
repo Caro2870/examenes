@@ -1,0 +1,4 @@
+# Migraciones de base de datos
+# Las migraciones se generan automáticamente con:
+# npm run migration:generate
+
