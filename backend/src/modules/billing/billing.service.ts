@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Suscripcion, EstadoSuscripcion, MetodoPago } from '../../entities/suscripcion.entity';
-import { Plan } from '../../entities/plan.entity';
+import { Plan, PlanType } from '../../entities/plan.entity';
 import { User } from '../../entities/user.entity';
 import Stripe from 'stripe';
 import * as paypal from 'paypal-rest-sdk';
@@ -22,7 +22,7 @@ export class BillingService {
   ) {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
     if (stripeKey) {
-      this.stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
+      this.stripe = new Stripe(stripeKey, { apiVersion: '2023-08-16' });
     }
 
     const paypalClientId = process.env.PAYPAL_CLIENT_ID;
@@ -59,15 +59,23 @@ export class BillingService {
       payment_method: paymentMethodId,
     });
 
+    // Crear producto primero
+    const product = await this.stripe.products.create({
+      name: plan.nombre,
+    });
+
+    // Crear precio
+    const price = await this.stripe.prices.create({
+      product: product.id,
+      currency: plan.moneda?.toLowerCase() || 'usd',
+      unit_amount: Math.round(parseFloat(plan.precio.toString()) * 100),
+      recurring: { interval: 'month' },
+    });
+
     // Crear suscripción
     const subscription = await this.stripe.subscriptions.create({
       customer: customer.id,
-      items: [{ price_data: {
-        currency: plan.moneda || 'usd',
-        product_data: { name: plan.nombre },
-        unit_amount: Math.round(parseFloat(plan.precio.toString()) * 100),
-        recurring: { interval: 'month' },
-      } }],
+      items: [{ price: price.id }],
       payment_behavior: 'default_incomplete',
       expand: ['latest_invoice.payment_intent'],
     });
@@ -161,7 +169,7 @@ export class BillingService {
     await this.suscripcionRepository.save(suscripcion);
 
     // Revertir a plan free
-    const freePlan = await this.planRepository.findOne({ where: { tipo: 'free' } });
+    const freePlan = await this.planRepository.findOne({ where: { tipo: PlanType.FREE } });
     if (freePlan) {
       await this.userRepository.update(userId, { plan_id: freePlan.id });
     }

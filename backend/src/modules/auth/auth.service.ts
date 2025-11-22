@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -51,6 +51,15 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto) {
+    // Verificar si el email ya existe
+    const existingUser = await this.userRepository.findOne({
+      where: { email: registerDto.email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('El email ya está registrado');
+    }
+
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
     
     const user = await this.usersService.create({
@@ -58,7 +67,19 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    const payload = { email: user.email, sub: user.id, role: user.role.nombre };
+    // Asegurarse de que el usuario tenga las relaciones cargadas
+    if (!user.role) {
+      const userWithRelations = await this.userRepository.findOne({
+        where: { id: user.id },
+        relations: ['role', 'plan'],
+      });
+      if (userWithRelations) {
+        user.role = userWithRelations.role;
+        user.plan = userWithRelations.plan;
+      }
+    }
+
+    const payload = { email: user.email, sub: user.id, role: user.role?.nombre || 'free' };
     return {
       access_token: this.jwtService.sign(payload),
       user: {
@@ -66,8 +87,8 @@ export class AuthService {
         email: user.email,
         nombre: user.nombre,
         apellido: user.apellido,
-        role: user.role.nombre,
-        plan: 'free',
+        role: user.role?.nombre || 'free',
+        plan: user.plan?.tipo || 'free',
       },
     };
   }

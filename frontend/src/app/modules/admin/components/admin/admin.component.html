@@ -1,0 +1,145 @@
+<div class="container">
+  <h1>Panel de Administración</h1>
+  <div class="admin-tabs">
+    <button class="btn" [class.active]="activeTab === 'questions'" (click)="activeTab = 'questions'">
+      Preguntas Pendientes
+    </button>
+    <button class="btn" [class.active]="activeTab === 'generate-ai'" (click)="activeTab = 'generate-ai'">
+      Generar con IA
+    </button>
+    <button class="btn" [class.active]="activeTab === 'create-manual'" (click)="activeTab = 'create-manual'">
+      Crear Manualmente
+    </button>
+    <button class="btn" [class.active]="activeTab === 'upload-excel'" (click)="activeTab = 'upload-excel'">
+      Importar desde Excel
+    </button>
+    <button class="btn" [class.active]="activeTab === 'reports'" (click)="activeTab = 'reports'">
+      Reportes
+    </button>
+  </div>
+  <div class="admin-content">
+    <!-- Preguntas Pendientes -->
+    <div *ngIf="activeTab === 'questions'">
+      <h2>Preguntas Pendientes de Aprobación</h2>
+      <div *ngIf="pendingQuestions.length === 0" class="card">
+        <p>No hay preguntas pendientes</p>
+      </div>
+      <div *ngFor="let question of pendingQuestions" class="card">
+        <h3>{{ question.texto }}</h3>
+        <p><strong>Categoría:</strong> {{ question.categoria?.nombre }}</p>
+        <p><strong>Nivel:</strong> {{ question.nivel?.nombre }}</p>
+        <p><strong>Dificultad:</strong> {{ question.dificultad?.nombre }}</p>
+        <div class="actions">
+          <button class="btn btn-success" (click)="approve(question.id)">Aprobar</button>
+          <button class="btn btn-danger" (click)="reject(question.id)">Rechazar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generar con IA -->
+    <div *ngIf="activeTab === 'generate-ai'">
+      <div class="card">
+        <h2>Generar Pregunta con IA</h2>
+        <form (ngSubmit)="generateQuestion()">
+          <div class="form-group">
+            <label>Categoría *</label>
+            <select [(ngModel)]="generateData.categoria_id" name="categoria" required>
+              <option value="">Seleccione una categoría</option>
+              <option *ngFor="let cat of categorias" [value]="cat.id">{{ cat.nombre }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Nivel *</label>
+            <select [(ngModel)]="generateData.nivel_id" name="nivel" required>
+              <option value="">Seleccione un nivel</option>
+              <option *ngFor="let nivel of niveles" [value]="nivel.id">{{ nivel.nombre }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Dificultad *</label>
+            <select [(ngModel)]="generateData.dificultad_id" name="dificultad" required>
+              <option value="">Seleccione una dificultad</option>
+              <option *ngFor="let dif of dificultades" [value]="dif.id">{{ dif.nombre }}</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Generar Pregunta</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Crear Manualmente -->
+    <div *ngIf="activeTab === 'create-manual'">
+      <div class="card">
+        <h2>Crear Pregunta Manualmente</h2>
+        <form (ngSubmit)="createManualQuestion()">
+          <div class="form-group">
+            <label>Texto de la Pregunta *</label>
+            <textarea [(ngModel)]="manualQuestion.texto" name="texto" rows="4" required></textarea>
+          </div>
+          <div class="form-group">
+            <label>Explicación</label>
+            <textarea [(ngModel)]="manualQuestion.explicacion" name="explicacion" rows="3"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Categoría *</label>
+              <select [(ngModel)]="manualQuestion.categoria_id" name="categoria" required>
+                <option value="">Seleccione una categoría</option>
+                <option *ngFor="let cat of categorias" [value]="cat.id">{{ cat.nombre }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Nivel *</label>
+              <select [(ngModel)]="manualQuestion.nivel_id" name="nivel" required>
+                <option value="">Seleccione un nivel</option>
+                <option *ngFor="let nivel of niveles" [value]="nivel.id">{{ nivel.nombre }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Dificultad *</label>
+              <select [(ngModel)]="manualQuestion.dificultad_id" name="dificultad" required>
+                <option value="">Seleccione una dificultad</option>
+                <option *ngFor="let dif of dificultades" [value]="dif.id">{{ dif.nombre }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Opciones de Respuesta *</label>
+            <div *ngFor="let opcion of manualQuestion.opciones; let i = index" class="option-group">
+              <input type="text" [(ngModel)]="opcion.texto" [name]="'opcion_' + i" placeholder="Texto de la opción" required>
+              <label>
+                <input type="radio" [name]="'correcta'" [value]="i" (change)="manualQuestion.opciones.forEach((o: any, idx: number) => o.es_correcta = idx === i)">
+                Correcta
+              </label>
+              <button type="button" class="btn btn-sm btn-danger" (click)="removeOption(i)" *ngIf="manualQuestion.opciones.length > 2">Eliminar</button>
+            </div>
+            <button type="button" class="btn btn-sm btn-secondary" (click)="addOption()">Agregar Opción</button>
+          </div>
+          <button type="submit" class="btn btn-primary">Crear Pregunta</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Importar desde Excel -->
+    <div *ngIf="activeTab === 'upload-excel'">
+      <div class="card">
+        <h2>Importar Preguntas desde Excel</h2>
+        <p>Selecciona un archivo Excel (.xlsx) con las preguntas. El formato debe incluir: texto, explicación, categoría, nivel, dificultad y opciones.</p>
+        <div class="form-group">
+          <label>Archivo Excel</label>
+          <input type="file" accept=".xlsx,.xls" (change)="onFileSelected($event)">
+        </div>
+        <button class="btn btn-primary" (click)="uploadExcel()" [disabled]="!selectedFile">
+          Subir y Procesar
+        </button>
+      </div>
+    </div>
+
+    <!-- Reportes -->
+    <div *ngIf="activeTab === 'reports'">
+      <h2>Reportes de Preguntas</h2>
+      <p>Funcionalidad de reportes en desarrollo</p>
+    </div>
+  </div>
+</div>
+

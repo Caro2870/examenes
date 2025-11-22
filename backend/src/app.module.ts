@@ -23,8 +23,10 @@ import { AdminModule } from './modules/admin/admin.module';
       useClass: DatabaseConfig,
     }),
     ThrottlerModule.forRoot({
-      ttl: 60,
-      limit: 100,
+      throttlers: [{
+        ttl: 60000,
+        limit: 100,
+      }],
     }),
     AuthModule,
     UsersModule,

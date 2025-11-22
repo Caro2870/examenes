@@ -8,7 +8,7 @@ import { LoadingComponent } from './components/loading/loading.component';
 @NgModule({
   declarations: [HeaderComponent, FooterComponent, LoadingComponent],
   imports: [CommonModule, RouterModule],
-  exports: [HeaderComponent, FooterComponent, LoadingComponent],
+  exports: [HeaderComponent, FooterComponent, LoadingComponent, RouterModule],
 })
 export class SharedModule {}
 

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { Pregunta } from '../../entities/pregunta.entity';
+import { Pregunta, EstadoPregunta } from '../../entities/pregunta.entity';
 import { Opcion } from '../../entities/opcion.entity';
 import { Categoria } from '../../entities/categoria.entity';
 import { Nivel } from '../../entities/nivel.entity';
@@ -93,16 +93,16 @@ export class QuestionsService {
       throw new BadRequestException('Debe haber exactamente una opción correcta');
     }
 
-    const pregunta = this.preguntaRepository.create({
+    const preguntaData: Partial<Pregunta> = {
       texto: createQuestionDto.texto,
       explicacion: createQuestionDto.explicacion,
       categoria_id: createQuestionDto.categoria_id,
       nivel_id: createQuestionDto.nivel_id,
       dificultad_id: createQuestionDto.dificultad_id,
       generada_ia: createQuestionDto.generada_ia || false,
-      estado: createQuestionDto.generada_ia ? 'pendiente' : 'aprobada',
-    });
-
+      estado: createQuestionDto.generada_ia ? EstadoPregunta.PENDIENTE : EstadoPregunta.APROBADA,
+    };
+    const pregunta = this.preguntaRepository.create(preguntaData);
     const savedPregunta = await this.preguntaRepository.save(pregunta);
 
     const opciones = createQuestionDto.opciones.map(opcion => 

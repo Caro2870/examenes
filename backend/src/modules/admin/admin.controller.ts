@@ -7,8 +7,11 @@ import {
   Patch,
   UseGuards,
   Request,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { GenerateQuestionDto } from './dto/generate-question.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -84,6 +87,15 @@ export class AdminController {
     @Body() body: { nombre?: string; descripcion?: string; activo?: boolean },
   ) {
     return this.adminService.updateCategory(+id, body.nombre, body.descripcion, body.activo);
+  }
+
+  @Post('questions/upload-excel')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Subir preguntas desde archivo Excel' })
+  @ApiResponse({ status: 200, description: 'Archivo procesado' })
+  async uploadExcel(@UploadedFile() file: Express.Multer.File, @Request() req) {
+    return this.adminService.processExcelFile(file, req.user.id);
   }
 }
 

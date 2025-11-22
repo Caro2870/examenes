@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { QuestionBankRoutingModule } from './question-bank-routing.module';
 import { QuestionBankComponent } from './components/question-bank/question-bank.component';
 import { QuestionDetailComponent } from './components/question-detail/question-detail.component';
@@ -8,7 +9,7 @@ import { CommentsModule } from '../comments/comments.module';
 
 @NgModule({
   declarations: [QuestionBankComponent, QuestionDetailComponent],
-  imports: [CommonModule, QuestionBankRoutingModule, CommentsModule],
+  imports: [CommonModule, FormsModule, QuestionBankRoutingModule, CommentsModule],
   providers: [QuestionsService],
 })
 export class QuestionBankModule {}

@@ -150,5 +150,34 @@ export class AdminService {
 
     return this.categoriaRepository.save(categoria);
   }
+
+  async processExcelFile(file: Express.Multer.File, userId: number) {
+    // TODO: Implementar procesamiento de Excel
+    // Por ahora, retornar un mensaje indicando que la funcionalidad está en desarrollo
+    // Para implementar completamente, instalar: npm install xlsx
+    // y procesar el archivo Excel para extraer las preguntas
+    
+    if (!file) {
+      throw new NotFoundException('Archivo no proporcionado');
+    }
+
+    // Validar tipo de archivo
+    const allowedMimes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+    ];
+    
+    if (!allowedMimes.includes(file.mimetype)) {
+      throw new NotFoundException('Tipo de archivo no válido. Solo se aceptan archivos Excel (.xlsx, .xls)');
+    }
+
+    // Por ahora, retornar un mensaje
+    // En producción, aquí se procesaría el archivo Excel y se crearían las preguntas
+    return {
+      message: 'Funcionalidad de importación desde Excel en desarrollo. El archivo fue recibido correctamente.',
+      filename: file.originalname,
+      size: file.size,
+    };
+  }
 }
 

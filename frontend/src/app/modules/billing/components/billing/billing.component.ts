@@ -3,19 +3,7 @@ import { BillingService } from '../../services/billing.service';
 
 @Component({
   selector: 'app-billing',
-  template: `
-    <div class="container">
-      <h1>Suscripciones</h1>
-      <div class="plans-grid">
-        <div *ngFor="let plan of plans" class="card plan-card">
-          <h3>{{ plan.nombre }}</h3>
-          <p class="price">${{ plan.precio }}/mes</p>
-          <p>{{ plan.descripcion }}</p>
-          <button class="btn btn-primary" (click)="subscribe(plan.id)">Suscribirse</button>
-        </div>
-      </div>
-    </div>
-  `,
+  templateUrl: './billing.component.html',
 })
 export class BillingComponent implements OnInit {
   plans: any[] = [];
@@ -37,4 +25,3 @@ export class BillingComponent implements OnInit {
     alert('Funcionalidad de suscripción en desarrollo');
   }
 }
-

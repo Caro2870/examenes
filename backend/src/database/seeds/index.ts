@@ -1,5 +1,4 @@
 import { DataSource } from 'typeorm';
-import { DatabaseConfig } from '../../config/database.config';
 import { ConfigService } from '@nestjs/config';
 import { Role, RoleType } from '../../entities/role.entity';
 import { Plan, PlanType } from '../../entities/plan.entity';
@@ -7,12 +6,45 @@ import { Categoria } from '../../entities/categoria.entity';
 import { Nivel, NivelType } from '../../entities/nivel.entity';
 import { Dificultad, DificultadType } from '../../entities/dificultad.entity';
 import { User } from '../../entities/user.entity';
+import { Opcion } from '../../entities/opcion.entity';
+import { Pregunta } from '../../entities/pregunta.entity';
+import { Examen } from '../../entities/examen.entity';
+import { ExamenPregunta } from '../../entities/examen-pregunta.entity';
+import { Comentario } from '../../entities/comentario.entity';
+import { VotoComentario } from '../../entities/voto-comentario.entity';
+import { ReportePregunta } from '../../entities/reporte-pregunta.entity';
+import { Suscripcion } from '../../entities/suscripcion.entity';
 import * as bcrypt from 'bcrypt';
 
 async function runSeeds() {
   const configService = new ConfigService();
-  const dbConfig = new DatabaseConfig(configService);
-  const dataSource = new DataSource(dbConfig.createTypeOrmOptions());
+  const dataSource = new DataSource({
+    type: 'postgres',
+    host: configService.get<string>('DATABASE_HOST', 'localhost'),
+    port: configService.get<number>('DATABASE_PORT', 5432),
+    username: configService.get<string>('DATABASE_USER', 'postgres'),
+    password: configService.get<string>('DATABASE_PASSWORD', 'postgres'),
+    database: configService.get<string>('DATABASE_NAME', 'examenes_db'),
+    entities: [
+      Role,
+      Plan,
+      Categoria,
+      Nivel,
+      Dificultad,
+      User,
+      Opcion,
+      Pregunta,
+      Examen,
+      ExamenPregunta,
+      Comentario,
+      VotoComentario,
+      ReportePregunta,
+      Suscripcion,
+    ],
+    synchronize: configService.get<string>('NODE_ENV') === 'development',
+    logging: configService.get<string>('NODE_ENV') === 'development',
+    migrations: [__dirname + '/../migrations/*{.ts,.js}'],
+  });
 
   try {
     await dataSource.initialize();

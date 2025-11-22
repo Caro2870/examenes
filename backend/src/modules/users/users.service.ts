@@ -1,9 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../entities/user.entity';
 import { Role, RoleType } from '../../entities/role.entity';
-import { Plan } from '../../entities/plan.entity';
+import { Plan, PlanType } from '../../entities/plan.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
@@ -18,6 +18,15 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
+    // Verificar si el email ya existe
+    const existingUser = await this.userRepository.findOne({
+      where: { email: createUserDto.email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('El email ya está registrado');
+    }
+
     const freeRole = await this.roleRepository.findOne({
       where: { nombre: RoleType.FREE },
     });
@@ -27,7 +36,7 @@ export class UsersService {
     }
 
     const freePlan = await this.planRepository.findOne({
-      where: { tipo: 'free' },
+      where: { tipo: PlanType.FREE },
     });
 
     const user = this.userRepository.create({
@@ -37,7 +46,10 @@ export class UsersService {
       ultimo_reseteo: new Date(),
     });
 
-    return this.userRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
+    
+    // Recargar el usuario con las relaciones
+    return this.findOne(savedUser.id);
   }
 
   async findOne(id: number): Promise<User> {
